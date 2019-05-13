@@ -11,4 +11,4 @@ ser = serial.Serial(
 )
 
 while True:
-   print(ser.readline())
+   print(ser.readline().decode().strip().split(','))
