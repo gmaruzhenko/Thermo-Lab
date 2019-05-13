@@ -6,12 +6,14 @@ import sys
 
 #Read from Arduino
 
-arduinoSerialData = serial.Serial('com8', 9600)  # Create Serial port object called arduinoSerialData
-time.sleep(10)  # wait for 2 secounds for the communication to get established
+ser = serial.Serial(
+   port = 'COM4',
+   baudrate = 9600,
+   timeout = 10
+)
 
-print arduinoSerialData.readline()  # read the serial data and print it as line
-print ("Enter 1 to turn ON LED and 0 to turn OFF LED")
-
+while True:
+   print(ser.readline().decode())#.strip().split(','))
 
 #write to csv
 
@@ -26,5 +28,3 @@ def csv_init():
 
 def csv_teardown(filename):
     filename.close()
-
-
