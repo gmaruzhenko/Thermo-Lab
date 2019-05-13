@@ -16,15 +16,17 @@ print ("Enter 1 to turn ON LED and 0 to turn OFF LED")
 #write to csv
 
 """
-Initializes a file for writing and returns the file name
+Initializes a file for writing and returns the file object
 """
 def csv_init():
 
     print("Enter output file name (e.g. data.csv):")
     filename = input()
 
+    return open(filename, "w")
 
-def csv_teardown(filename):
-    filename.close()
+
+def csv_teardown(file_obj):
+    file_obj.close()
 
 
