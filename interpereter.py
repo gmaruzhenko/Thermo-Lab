@@ -23,8 +23,10 @@ plotItem = window.addPlot()
 datasets = [collections.deque(maxlen = 1000) for _ in range(len(data))]
 plotDataItems = [plotItem.plot(datasets[i], pen = (i, 3)) for i in range(len(data))]
 
+filename = str(datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S.csv"))
+
 def update():
-    global plotDataItems
+    global plotDataItems, filename
     data = ser.readline().decode().strip().split(',')
     #data = np.random.normal(size = 5)
     print(data)
@@ -32,7 +34,7 @@ def update():
         datasets[i].append(data[i])
         plotDataItems[i].setData(datasets[i])
 
-    with open(datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S.csv"), "a", newline='') as csv_file:
+    with open(filename, "a", newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(data)
 
