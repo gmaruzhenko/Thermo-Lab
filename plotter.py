@@ -12,7 +12,7 @@ def tempToVoltage(t):
 def voltageToTemp(x):
     return 100*(x-0.75) + 25 
 
-data = np.loadtxt('RunMay17-2.csv', delimiter=',')
+data = np.loadtxt('RunMay17-1.csv', delimiter=',')
 time = data[:, 0] / 1000
 temp = np.array([voltageToTemp(data[:, i] * 5 / 1024) for i in range(1,6)])
 x = np.array([i * SENSOR_SPACING for i in range(5)])
