@@ -24,21 +24,21 @@ ax2.set_xlabel("Position along rod (mm)")
 ax2.set_ylabel("Time (s)")
 ax2.set_zlabel("Temperature (degC)")
 
-time, x = np.meshgrid(time, x)
+#time, x = np.meshgrid(time, x)
 
 print(x.shape)
 print(time.shape)
 
 print(temp.shape)
 
-ax2.plot_surface(x, time, temp, cmap = colormap.viridis)
-plt.show()
-
-# plt.figure(1)
-# plt.xlabel("Time (s)")
-# plt.ylabel("Temperature (degC)")
-
-# for i in range(len(t)):
-#     plt.plot(time, t[i])
-
+# ax2.plot_surface(x, time, temp, cmap = colormap.viridis)
 # plt.show()
+
+plt.figure(1)
+plt.xlabel("Time (s)")
+plt.ylabel("Temperature (degC)")
+
+for i in range(len(temp)):
+    plt.plot(time, temp[i])
+
+plt.show()
