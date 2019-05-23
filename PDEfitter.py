@@ -9,7 +9,7 @@ RHO = 2700 # kg/m^3
 SIGMA = 5.67*10**(-8) #W/m^2/K^4
 
 ROD_LENGTH = 0.3045 # m
-NUM_POINTS = 23
+NUM_POINTS = 20 * 2
 xRange = np.linspace(0, ROD_LENGTH, NUM_POINTS)
 sensorLocations = [0.013, 0.083, 0.153, 0.223, 0.293]
 #sensorIndices = [np.argmax(np.abs(xRange >= sensorLocation)) for sensorLocation in sensorLocations]
@@ -65,10 +65,10 @@ def compare(params, *otherArgs):
     model = simulateThroughTime(K, Kc, epsilon, powerIn, numTimeSteps, Tamb, radius, dx, dt)
     modelTemps = pickSensorModelTemps(model, sensorIndices)
 
-    return diffTwoArrays(modelTemps, smoothTemp)
+    return diffTwoArrays(modelTemps, interpTemp)
 
 
-numTimeSteps = 1350
+numTimeSteps = 1350 * 2
 dataTruncStart = 89
 dataRaw = np.loadtxt('RunMay17-1.csv', delimiter=',')
 
@@ -76,25 +76,30 @@ dataRaw = np.loadtxt('RunMay17-1.csv', delimiter=',')
 data = dataRaw[dataTruncStart:dataTruncStart + numTimeSteps]
 
 #calibrations for sensors that are slightly off
-data[:, 1] -= 2
-data[:, 2] -= 2
-data[:, 4] -= 2
+data[:, 1] -= 1
+data[:, 2] -= 1
+data[:, 3] += 1
+data[:, 4] -= 1
+data[:, 5] += 1
 
 time = (data[:, 0] - data[0][0]) / 1000
 averageTimeStep = np.mean([time[i] - time[i-1] for i in range(1, len(time))])
+dt = averageTimeStep / 2.5
+modelTimes = np.arange(numTimeSteps) * dt
 temp = np.array([voltageToTemp(data[:, i] * 5 / 1024) for i in range(1,6)])
 smoothTemp = np.array( [ smooth(temp[i], 6) for i in range(len(temp)) ])
 smoothTemp = smoothTemp.transpose()
+interpTemp = np.array( [ np.interp(modelTimes, time, temp[i]) for i in range(len(temp)) ] ).transpose()
 temp = temp.transpose()
+
 # print(temp.shape)
 
 Tamb = np.mean(temp[0]) # K
 radius = 0.0254/2
 dx = ROD_LENGTH/(NUM_POINTS)
-dt = averageTimeStep
 K = 200 # J/(s*m*K)
 Kc = 12 # W/m^2/K
-epsilon = 0.5
+epsilon = 0.1
 powerIn = 15 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
@@ -118,17 +123,16 @@ fP = results.x
 print(fP)
 
 # plt.plot(xRange, Tarr.transpose())
-modelTimes = np.arange(numTimeSteps) * dt
 model = pickSensorModelTemps(
     simulateThroughTime(fP[0], fP[1], fP[2], fP[3], numTimeSteps, Tamb, radius, dx, dt), 
     sensorIndices
 )
 # # modelTemps = pickSensorModelTemps(Tarr, sensorIndices)
-# # print(modelTemps.shape)
-# # print(temp.transpose().shape)
+print(modelTimes.shape)
+print(interpTemp.shape)
 plt.xlabel("Time (s)")
 plt.ylabel("Temperature (K)")
 plt.plot(modelTimes, model)
-plt.plot(modelTimes, temp, '.')
-plt.plot(modelTimes, smoothTemp)
+plt.plot(np.arange(interpTemp.shape[0]) * dt, interpTemp, '.')
+#plt.plot(modelTimes, smoothTemp)
 plt.show()
