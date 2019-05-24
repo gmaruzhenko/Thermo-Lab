@@ -97,9 +97,9 @@ radius = 0.0254/2
 dx = ROD_LENGTH/(NUM_POINTS)
 dt = averageTimeStep
 K = 200 # J/(s*m*K)
-Kc = 10 # W/m^2/K
-epsilon = 0.5
-powerIn = 15 # W
+Kc = 5.51 # W/m^2/K
+epsilon = 0
+powerIn = 13 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
 
@@ -113,8 +113,8 @@ results = minimize(
     #method="trust-constr",
     bounds = (
         (125,250),
-        (0, 20),
-        (0, 1),
+        (0, None),
+        (0, 0),
         (10,19)
     ),
     options={
@@ -123,7 +123,7 @@ results = minimize(
     }
 )
 
-with open("PDE_fit_results_3.pickle", "wb") as f:
+with open("PDE_fit_e0.pickle", "wb") as f:
     pickle.dump(results, f)
 
 fP = results.x
