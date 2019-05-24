@@ -107,17 +107,21 @@ powerIn = 13 # W
 results = minimize(
     compare, 
     np.array([K, Kc, epsilon, powerIn]),
-    method = "TNC",
+    #method = "TNC",
     bounds = (
         (150,300),
         (1, 20),
-        (0, 0.8),
+        (0, 1),
         (10,19)
-    )
+    ),
+    options = {
+        'maxiter': 1000, 
+        'disp': True
+    }
 )
 
-with open("PDE_fit_results.pickle", "wb") as f:
-    pickle.dump(results, f)
+# with open("PDE_fit_results.pickle", "wb") as f:
+#     pickle.dump(results, f)
 
 fP = results.x
 
