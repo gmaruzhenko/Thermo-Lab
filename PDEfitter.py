@@ -76,9 +76,11 @@ dataRaw = np.loadtxt('RunMay17-1.csv', delimiter=',')
 data = dataRaw[dataTruncStart:dataTruncStart + numTimeSteps]
 
 #calibrations for sensors that are slightly off
-data[:, 1] -= 2
-data[:, 2] -= 2
-data[:, 4] -= 2
+data[:, 1] -= 1
+data[:, 2] -= 1
+data[:, 3] += 1
+data[:, 4] -= 1
+data[:, 5] += 1
 
 time = (data[:, 0] - data[0][0]) / 1000
 averageTimeStep = np.mean([time[i] - time[i-1] for i in range(1, len(time))])
@@ -94,8 +96,8 @@ dx = ROD_LENGTH/(NUM_POINTS)
 dt = averageTimeStep
 K = 200 # J/(s*m*K)
 Kc = 12 # W/m^2/K
-epsilon = 0.5
-powerIn = 15 # W
+epsilon = 0.1
+powerIn = 13 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
 
@@ -130,5 +132,5 @@ plt.xlabel("Time (s)")
 plt.ylabel("Temperature (K)")
 plt.plot(modelTimes, model)
 plt.plot(modelTimes, temp, '.')
-plt.plot(modelTimes, smoothTemp)
+# plt.plot(modelTimes, smoothTemp)
 plt.show()
