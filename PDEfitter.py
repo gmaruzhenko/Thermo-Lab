@@ -98,7 +98,7 @@ dx = ROD_LENGTH/(NUM_POINTS)
 dt = averageTimeStep
 K = 200 # J/(s*m*K)
 Kc = 10 # W/m^2/K
-epsilon = 0.1
+epsilon = 0.5
 powerIn = 15 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
@@ -112,7 +112,7 @@ results = minimize(
     x0 = np.array([K, Kc, epsilon, powerIn]),
     #method="trust-constr",
     bounds = (
-        (150,250),
+        (125,250),
         (0, 20),
         (0, 1),
         (10,19)
