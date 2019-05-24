@@ -18,7 +18,6 @@ sensorIndices = [np.argmin(np.abs(xRange - sensorLocation)) for sensorLocation i
 print([xRange[index] for index in sensorIndices])
 
 
-
 def calculateStep(T, Tamb, radius, dx, dt, K, Kc, epsilon, powerIn):
     Parr = -2*pi*radius*dx* ( Kc*(T[1:-1] - Tamb) + epsilon*SIGMA*((T[1:-1])**4 - Tamb**4))
     T[1:-1] = T[1:-1] + (
@@ -98,7 +97,7 @@ dx = ROD_LENGTH/(NUM_POINTS)
 dt = averageTimeStep
 K = 200 # J/(s*m*K)
 Kc = 5.51 # W/m^2/K
-epsilon = 0
+epsilon = 1
 powerIn = 13 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
@@ -114,7 +113,7 @@ results = minimize(
     bounds = (
         (125,250),
         (0, None),
-        (0, 0),
+        (epsilon, epsilon),
         (10,19)
     ),
     options={
@@ -123,8 +122,8 @@ results = minimize(
     }
 )
 
-with open("PDE_fit_e0.pickle", "wb") as f:
-    pickle.dump(results, f)
+# with open("PDE_fit_e0.pickle", "wb") as f:
+#     pickle.dump(results, f)
 
 fP = results.x
 if hasattr(results, "hess_inv"):
@@ -142,12 +141,41 @@ model = pickSensorModelTemps(
     simulateThroughTime(fP[0], fP[1], fP[2], fP[3], numTimeSteps, Tamb, radius, dx, dt), 
     sensorIndices
 )
+
+
+with open("model_e1.pickle", "wb") as f:
+    pickle.dump(model, f)
+
 # # modelTemps = pickSensorModelTemps(Tarr, sensorIndices)
 # # print(modelTemps.shape)
 # # print(temp.transpose().shape)
+error = 0.569
+plt.figure(figsize = (10.0,6.0), dpi = 125)
+#plt.title("Emissivity constrained to {}".format(epsilon))
 plt.xlabel("Time (s)")
 plt.ylabel("Temperature (K)")
-plt.plot(modelTimes, model)
-plt.plot(modelTimes, temp, '.')
+for i in range(5):
+    plt.plot(
+        modelTimes, 
+        model[:, i], 
+        color = 'C' + str(i), 
+        label = "Model at {} m".format(sensorLocations[i])
+    )
+    plt.plot(
+        modelTimes, 
+        temp[:, i], 
+        '.', 
+        color = 'C' + str(i), 
+        ms = 0.5
+        #label = "Sensor at {} m".format(sensorLocations[i])
+    )
+    plt.fill_between(
+        time, 
+        temp[:, i] - error, temp[:, i] + error, 
+        color = 'C' + str(i), 
+        alpha = 0.25
+    )
+plt.legend()
+
 # plt.plot(modelTimes, smoothTemp)
 plt.show()
