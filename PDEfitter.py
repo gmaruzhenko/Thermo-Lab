@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from scipy.ndimage import gaussian_filter1d as smooth
+import pickle
 
 C = 900 # J/(kg*K)
 RHO = 2700 # kg/m^3
@@ -114,6 +115,9 @@ results = minimize(
         (10,19)
     )
 )
+
+with open("PDE_fit_results.pickle", "wb") as f:
+    pickle.dump(results, f)
 
 fP = results.x
 
