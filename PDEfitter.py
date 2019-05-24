@@ -44,7 +44,7 @@ def calculateStep(T, Tamb, radius, dx, dt, K, Kc, epsilon, powerIn):
     return T
 
 def diffTwoArrays(A, B):
-    return np.sum((A-B)**2)
+    return np.sum((0.001*(A-B))**2)
     
 def simulateThroughTime(K, Kc, epsilon, powerIn, numSteps, Tamb, radius, dx, dt):
     Tarr = np.full((numSteps, NUM_POINTS), Tamb)
@@ -59,6 +59,7 @@ def voltageToTemp(x):
     return 100*(x-0.75) + 25 + 273 
 
 def compare(params, *otherArgs):
+    #print(params)
     K = params[0]
     Kc = params[1]
     epsilon = params[2]
@@ -66,7 +67,7 @@ def compare(params, *otherArgs):
     model = simulateThroughTime(K, Kc, epsilon, powerIn, numTimeSteps, Tamb, radius, dx, dt)
     modelTemps = pickSensorModelTemps(model, sensorIndices)
 
-    return diffTwoArrays(modelTemps, smoothTemp)
+    return diffTwoArrays(modelTemps, temp)
 
 
 numTimeSteps = 1350
@@ -96,38 +97,46 @@ radius = 0.0254/2
 dx = ROD_LENGTH/(NUM_POINTS)
 dt = averageTimeStep
 K = 200 # J/(s*m*K)
-Kc = 12 # W/m^2/K
+Kc = 10 # W/m^2/K
 epsilon = 0.1
-powerIn = 13 # W
+powerIn = 15 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
 
 # print(residual)
 
+ftol = 2.220446049250313e-09
+#ftol = 1e-12
 results = minimize(
     compare, 
-    np.array([K, Kc, epsilon, powerIn]),
-    #method = "TNC",
+    x0 = np.array([K, Kc, epsilon, powerIn]),
+    #method="trust-constr",
     bounds = (
-        (150,300),
-        (1, 20),
+        (150,250),
+        (0, 20),
         (0, 1),
         (10,19)
     ),
-    options = {
-        'maxiter': 1000, 
-        'disp': True
+    options={
+        "disp":True,
+        "ftol":ftol
     }
 )
 
-# with open("PDE_fit_results.pickle", "wb") as f:
-#     pickle.dump(results, f)
+with open("PDE_fit_results_3.pickle", "wb") as f:
+    pickle.dump(results, f)
 
 fP = results.x
+if hasattr(results, "hess_inv"):
+    hessInv = results.hess_inv(np.eye(4))
+    #print(hessInv)
+    print(np.matmul(hessInv, results.jac.transpose()))
+    #for i in range(4):
+        #print(np.sqrt(ftol*abs(hessInv[i,i])))
 
 print(fP)
 
-# plt.plot(xRange, Tarr.transpose())
+# plt.plot(xRange, Tarr.transpose())smin
 modelTimes = np.arange(numTimeSteps) * dt
 model = pickSensorModelTemps(
     simulateThroughTime(fP[0], fP[1], fP[2], fP[3], numTimeSteps, Tamb, radius, dx, dt), 
