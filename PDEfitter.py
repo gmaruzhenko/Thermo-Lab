@@ -43,12 +43,15 @@ def calculateStep(T, Tamb, radius, dx, dt, K, Kc, epsilon, powerIn):
     return T
 
 def diffTwoArrays(A, B):
-    return np.sum((0.001*(A-B))**2)
+    return np.sum(((A-B))**2)
     
 def simulateThroughTime(K, Kc, epsilon, powerIn, numSteps, Tamb, radius, dx, dt):
     Tarr = np.full((numSteps, NUM_POINTS), Tamb)
     for i in range(numSteps - 1):
-        Tarr[i+1] = calculateStep(Tarr[i], Tamb, radius, dx, dt, K, Kc, epsilon, powerIn)
+        Tarr[i+1] = calculateStep(
+            Tarr[i], 
+            Tamb, radius, dx, dt, K, Kc, epsilon, 
+            powerIn * (i * dt < 1353))
     return Tarr
 
 def pickSensorModelTemps(Tarr, sensorIndices):
@@ -69,7 +72,7 @@ def compare(params, *otherArgs):
     return diffTwoArrays(modelTemps, temp)
 
 
-numTimeSteps = 1350
+numTimeSteps = 2665
 dataTruncStart = 89
 dataRaw = np.loadtxt('RunMay17-1.csv', delimiter=',')
 
@@ -122,8 +125,8 @@ results = minimize(
     }
 )
 
-# with open("PDE_fit_e0.pickle", "wb") as f:
-#     pickle.dump(results, f)
+with open("PDE_fitV2_e1.pickle", "wb") as f:
+    pickle.dump(results, f)
 
 fP = results.x
 if hasattr(results, "hess_inv"):
@@ -135,7 +138,7 @@ if hasattr(results, "hess_inv"):
 
 print(fP)
 
-# plt.plot(xRange, Tarr.transpose())smin
+# plt.plot(xRange, Tarr.transpose())
 modelTimes = np.arange(numTimeSteps) * dt
 model = pickSensorModelTemps(
     simulateThroughTime(fP[0], fP[1], fP[2], fP[3], numTimeSteps, Tamb, radius, dx, dt), 
@@ -143,7 +146,7 @@ model = pickSensorModelTemps(
 )
 
 
-with open("model_e1.pickle", "wb") as f:
+with open("modelV2_e1.pickle", "wb") as f:
     pickle.dump(model, f)
 
 # # modelTemps = pickSensorModelTemps(Tarr, sensorIndices)
