@@ -71,10 +71,60 @@ def compare(params, *otherArgs):
 
     return diffTwoArrays(modelTemps, temp)
 
+def epsilon_to_kc():
+
+    # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
+
+    epsilon_vals = np.arange(0, 1, 0.1)
+
+    # data is a list of (epsilon, kc) tuples
+    data = []
+
+    for epsilon in epsilon_vals:
+
+        results = minimize(
+            compare, 
+            x0 = np.array([K, Kc, epsilon, powerIn]),
+            #method="trust-constr",
+            bounds = (
+                (125,250),
+                (0, None),
+                (epsilon, epsilon),
+                (10,19)
+            ),
+            options={
+                "disp":True,
+                "ftol":ftol
+            }
+        )
+
+        data.append((epsilon, results.x[1]))
+    
+    return data
+
+
+def plot_epsilon_vs_kc(data):
+
+    fig, ax = plt.subplots()
+    
+    ax.set_title("Emissivity vs Convection Coefficient")
+
+    ax.set_xlabel("Convection Coefficient (W / m^2 K)")
+    ax.set_ylabel("Emissivity")
+
+    x_vals = list(map(lambda pt: pt[0], data))
+    y_vals = list(map(lambda pt: pt[1], data))
+
+    ax.plot(x_vals, y_vals, 'bx', label='Simulated Data')
+
+    ax.legend()
+    
+    fig.savefig("e_vs_kc.png", dpi=1200)
+
 
 numTimeSteps = 2665
 dataTruncStart = 89
-dataRaw = np.loadtxt('RunMay17-1.csv', delimiter=',')
+dataRaw = np.loadtxt('data/RunMay17-1.csv', delimiter=',')
 
 #truncating data
 data = dataRaw[dataTruncStart:dataTruncStart + numTimeSteps]
@@ -109,6 +159,8 @@ powerIn = 13 # W
 
 ftol = 2.220446049250313e-09
 #ftol = 1e-12
+
+"""
 results = minimize(
     compare, 
     x0 = np.array([K, Kc, epsilon, powerIn]),
@@ -182,3 +234,14 @@ plt.legend()
 
 # plt.plot(modelTimes, smoothTemp)
 plt.show()
+"""
+
+data = epsilon_to_kc()
+
+print("epsilon vs k_c:")
+print(data)
+
+plot_epsilon_vs_kc(data)
+
+savefile = "naked.npy"
+np.save(savefile, data)
