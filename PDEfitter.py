@@ -72,7 +72,7 @@ def compare(params, *otherArgs):
     return diffTwoArrays(modelTemps, temp)
 
 
-numTimeSteps = 2665
+numTimeSteps = 2655
 dataTruncStart = 89
 dataRaw = np.loadtxt('RunMay17-1.csv', delimiter=',')
 
@@ -100,85 +100,90 @@ dx = ROD_LENGTH/(NUM_POINTS)
 dt = averageTimeStep
 K = 200 # J/(s*m*K)
 Kc = 5.51 # W/m^2/K
-epsilon = 1
+epsilon = 0.7
 powerIn = 13 # W
 
 # residual, observed, model = compare(temp.transpose(), K, Kc, epsilon, powerIn)
 
 # print(residual)
 
-ftol = 2.220446049250313e-09
-#ftol = 1e-12
-results = minimize(
-    compare, 
-    x0 = np.array([K, Kc, epsilon, powerIn]),
-    #method="trust-constr",
-    bounds = (
-        (125,250),
-        (0, None),
-        (epsilon, epsilon),
-        (10,19)
-    ),
-    options={
-        "disp":True,
-        "ftol":ftol
-    }
-)
-
-with open("PDE_fitV2_e1.pickle", "wb") as f:
-    pickle.dump(results, f)
-
-fP = results.x
-if hasattr(results, "hess_inv"):
-    hessInv = results.hess_inv(np.eye(4))
-    #print(hessInv)
-    print(np.matmul(hessInv, results.jac.transpose()))
-    #for i in range(4):
-        #print(np.sqrt(ftol*abs(hessInv[i,i])))
-
-print(fP)
-
-# plt.plot(xRange, Tarr.transpose())
-modelTimes = np.arange(numTimeSteps) * dt
-model = pickSensorModelTemps(
-    simulateThroughTime(fP[0], fP[1], fP[2], fP[3], numTimeSteps, Tamb, radius, dx, dt), 
-    sensorIndices
-)
-
-
-with open("modelV2_e1.pickle", "wb") as f:
-    pickle.dump(model, f)
-
-# # modelTemps = pickSensorModelTemps(Tarr, sensorIndices)
-# # print(modelTemps.shape)
-# # print(temp.transpose().shape)
-error = 0.569
-plt.figure(figsize = (10.0,6.0), dpi = 125)
-#plt.title("Emissivity constrained to {}".format(epsilon))
-plt.xlabel("Time (s)")
-plt.ylabel("Temperature (K)")
-for i in range(5):
-    plt.plot(
-        modelTimes, 
-        model[:, i], 
-        color = 'C' + str(i), 
-        label = "Model at {} m".format(sensorLocations[i])
+def fit(epsilon, save = False):
+    ftol = 2.220446049250313e-09
+    #ftol = 1e-12
+    results = minimize(
+        compare, 
+        x0 = np.array([K, Kc, epsilon, powerIn]),
+        #method="trust-constr",
+        bounds = (
+            (125,250),
+            (0, None),
+            (epsilon, epsilon),
+            (10,19)
+        ),
+        options={
+            "disp":True,
+            "ftol":ftol
+        }
     )
-    plt.plot(
-        modelTimes, 
-        temp[:, i], 
-        '.', 
-        color = 'C' + str(i), 
-        ms = 0.5
-        #label = "Sensor at {} m".format(sensorLocations[i])
-    )
-    plt.fill_between(
-        time, 
-        temp[:, i] - error, temp[:, i] + error, 
-        color = 'C' + str(i), 
-        alpha = 0.25
-    )
-plt.legend()
 
-# plt.plot(modelTimes, smoothTemp)
-plt.show()
+    if save:
+        with open("PDE_fitV2_e1.pickle", "wb") as f:
+            pickle.dump(results, f)
+
+    fP = results.x
+    if hasattr(results, "hess_inv"):
+        hessInv = results.hess_inv(np.eye(4))
+        #print(hessInv)
+        print(np.matmul(hessInv, results.jac.transpose()))
+        #for i in range(4):
+            #print(np.sqrt(ftol*abs(hessInv[i,i])))
+
+    print(fP)
+
+    # plt.plot(xRange, Tarr.transpose())
+    modelTimes = np.arange(numTimeSteps) * dt
+    model = pickSensorModelTemps(
+        simulateThroughTime(fP[0], fP[1], fP[2], fP[3], numTimeSteps, Tamb, radius, dx, dt), 
+        sensorIndices
+    )
+
+    if save:
+        with open("modelV2_e1.pickle", "wb") as f:
+            pickle.dump(model, f)
+
+    # # modelTemps = pickSensorModelTemps(Tarr, sensorIndices)
+    # # print(modelTemps.shape)
+    # # print(temp.transpose().shape)
+    error = 0.569
+    plt.figure(figsize = (10.0,6.0), dpi = 125)
+    #plt.title("Emissivity constrained to {}".format(epsilon))
+    plt.xlabel("Time (s)")
+    plt.ylabel("Temperature (K)")
+    for i in range(5):
+        plt.plot(
+            modelTimes, 
+            model[:, i], 
+            color = 'C' + str(i), 
+            label = "Model at {} m".format(sensorLocations[i])
+        )
+        plt.plot(
+            modelTimes, 
+            temp[:, i], 
+            '.', 
+            color = 'C' + str(i), 
+            ms = 0.5
+            #label = "Sensor at {} m".format(sensorLocations[i])
+        )
+        plt.fill_between(
+            time, 
+            temp[:, i] - error, temp[:, i] + error, 
+            color = 'C' + str(i), 
+            alpha = 0.25
+        )
+    plt.legend()
+
+    # plt.plot(modelTimes, smoothTemp)
+    plt.show()
+
+for e in [0.18]:
+    fit(e)
